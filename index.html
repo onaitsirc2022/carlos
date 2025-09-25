@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Book Gerencial – Saúde da Rede de Internet</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- A biblioteca PptxGenJS foi movida para o final do body para garantir o carregamento correto -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         body {
@@ -18,9 +17,6 @@
             display: none;
         }
         /* Simple chart styles */
-        .bar-chart-bar {
-            transition: height 0.5s ease-out;
-        }
         .pie-chart {
             width: 150px;
             height: 150px;
@@ -288,11 +284,9 @@
         </div>
     </div>
 
-    <!-- Moved scripts to the end of the body for correct loading order -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pptxgenjs/3.12.0/pptxgen.bundle.js"></script>
+    <!-- O script da biblioteca será carregado dinamicamente -->
     <script>
-    document.addEventListener('DOMContentLoaded', () => {
-        // Slide navigation logic
+        // Lógica de navegação (sem alterações)
         const slides = document.querySelectorAll('.slide');
         const prevBtn = document.getElementById('prevBtn');
         const nextBtn = document.getElementById('nextBtn');
@@ -304,118 +298,127 @@
 
         function showSlide(index) {
             slides.forEach((slide, i) => {
-                if (i === index) {
-                    slide.classList.remove('slide-hidden');
-                    slide.style.opacity = 1;
-                } else {
-                    slide.classList.add('slide-hidden');
-                    slide.style.opacity = 0;
-                }
+                slide.style.display = (i === index) ? 'block' : 'none';
             });
             slideCounter.textContent = `Slide ${index + 1} de ${totalSlides}`;
             prevBtn.disabled = index === 0;
             nextBtn.disabled = index === totalSlides - 1;
         }
 
-        prevBtn.addEventListener('click', () => {
-            if (currentSlide > 0) {
-                currentSlide--;
-                showSlide(currentSlide);
-            }
-        });
+        prevBtn.addEventListener('click', () => { if (currentSlide > 0) { currentSlide--; showSlide(currentSlide); } });
+        nextBtn.addEventListener('click', () => { if (currentSlide < totalSlides - 1) { currentSlide++; showSlide(currentSlide); } });
+        
+        // --- LÓGICA DE DOWNLOAD ROBUSTA ---
+        let pptxLibraryLoaded = false;
 
-        nextBtn.addEventListener('click', () => {
-            if (currentSlide < totalSlides - 1) {
-                currentSlide++;
-                showSlide(currentSlide);
-            }
-        });
+        function generatePptx() {
+            try {
+                let pptx = new PptxGenJS();
+                pptx.layout = 'LAYOUT_WIDE';
+                const titleOpts = { x: 0.5, y: 0.25, w: 9, h: 0.75, fontSize: 32, fontFace: 'Inter', color: '00A6A6', bold: true };
 
-        // PowerPoint generation logic
-        downloadBtn.addEventListener('click', () => {
-            // Safeguard to check if the library is loaded
-            if (typeof PptxGenJS === 'undefined') {
-                console.error('Error: PptxGenJS library is not loaded yet.');
-                // We can't use alert, so we'll just log to console and stop.
+                // Slide 1
+                let slide1 = pptx.addSlide();
+                slide1.background = { color: '111827' };
+                slide1.addText('1. Resumo Executivo', titleOpts);
+                slide1.addText('Visão Geral da Saúde da Rede – [Mês/Ano]', { x: 0.5, y: 1.0, w: 9, h: 0.5, fontSize: 18, color: 'D1D5DB' });
+                slide1.addText([
+                    { text: 'Performance Geral:', options: { bold: true } },
+                    { text: ' A rede operou com alta estabilidade.', options: { breakLine: true } },
+                    { text: 'Destaques Positivos:', options: { bold: true, breakLine: true } },
+                    { text: ' Redução de 20% na latência média.', options: { breakLine: true } },
+                    { text: 'Pontos de Atenção:', options: { bold: true, breakLine: true } },
+                    { text: ' 3 incidentes de lentidão no período da tarde.', options: { breakLine: true } },
+                    { text: 'Conclusão:', options: { bold: true, breakLine: true } },
+                    { text: ' A saúde da rede é considerada Boa.' }
+                ], { x: 0.5, y: 1.8, w: 9, h: 3, fontSize: 16, color: 'FFFFFF', bullet: 'bull' });
+
+                // Slide 3
+                let slide3 = pptx.addSlide();
+                slide3.background = { color: '111827' };
+                slide3.addText('3. Incidentes e Ocorrências', titleOpts);
+                slide3.addText('Total de Incidentes: 5\nTempo Médio para Resolução: 45 minutos', { x: 0.5, y: 1.2, w: 4, h: 1, fontSize: 18, color: 'FFFFFF' });
+                let chartData = [{ name: "Criticidade", labels: ["Alta", "Média", "Baixa"], values: [1, 2, 2] }];
+                let chartOpts = { x: 5, y: 1.2, w: 4.5, h: 3.5, chartColors: ['EF4444', 'F59E0B', '6B7280'], dataLabelColor: 'FFFFFF', legendPos: 'r', title: 'Classificação por Criticidade', titleColor: 'D1D5DB', titleFontSize: 16 };
+                slide3.addChart(pptx.charts.PIE, chartData, chartOpts);
+
+                // Slide 6
+                let slide6 = pptx.addSlide();
+                slide6.background = { color: '111827' };
+                slide6.addText('6. Comparativo Histórico', titleOpts);
+                let rows = [
+                    [{ text: "Mês", options: { bold: true, color: 'FFFFFF', fill: '374151' } }, { text: "Disponibilidade (%)", options: { bold: true, color: 'FFFFFF', fill: '374151' } }, { text: "Latência Média (ms)", options: { bold: true, color: 'FFFFFF', fill: '374151' } }, { text: "Incidentes Críticos", options: { bold: true, color: 'FFFFFF', fill: '374151' } }],
+                    ['[Mês-6]', '99,7%', '25', '3'],
+                    ['[Mês-5]', '99,6%', '22', '2'],
+                    ['[Mês-4]', '99,9%', '18', '1'],
+                    ['[Mês-3]', '99,8%', '19', '1'],
+                    ['[Mês-2]', '99,9%', '16', '0'],
+                    [{ text: '[Mês-1]', options: { bold: true } }, { text: '99,8%', options: { bold: true } }, { text: '15', options: { bold: true } }, { text: '1', options: { bold: true } }]
+                ];
+                slide6.addTable(rows, { x: 0.5, y: 1.2, w: 9, autoPage: true, color: 'FFFFFF', border: { type: 'solid', pt: 1, color: '6B7280' }, rowH: 0.4 });
+
+                // Outros slides
+                const otherSlides = [2, 4, 5, 7, 8];
+                otherSlides.forEach(slideNum => {
+                    const slideContent = document.querySelector(`.slide:nth-child(${slideNum})`);
+                    if(slideContent){
+                        let slide = pptx.addSlide();
+                        slide.background = { color: '111827' };
+                        const titleText = slideContent.querySelector('h1').innerText;
+                        slide.addText(titleText, titleOpts);
+                        slide.addText("O conteúdo detalhado para este slide\nestá disponível na versão HTML interativa.", { x: 1, y: 2, w:8, h:2, fontSize: 18, color: 'D1D5DB', align: 'center' });
+                    }
+                });
+
+                pptx.writeFile({ fileName: 'Apresentacao_Saude_Rede.pptx' });
+                downloadBtn.disabled = false;
+                downloadBtn.textContent = 'Download PPTX';
+
+            } catch (err) {
+                console.error("Ocorreu um erro ao gerar o PPTX:", err);
+                downloadBtn.textContent = 'Erro!';
+                setTimeout(() => { 
+                    downloadBtn.disabled = false;
+                    downloadBtn.textContent = 'Download PPTX';
+                }, 3000);
+            }
+        }
+        
+        function loadPptxLibraryAndGenerate() {
+            downloadBtn.disabled = true;
+            downloadBtn.textContent = 'A preparar...';
+
+            if (pptxLibraryLoaded) {
+                generatePptx();
                 return;
             }
 
-            let pptx = new PptxGenJS();
-            pptx.layout = 'LAYOUT_WIDE';
-
-            // Common style for titles
-            const titleOpts = { x: 0.5, y: 0.25, w: 9, h: 0.75, fontSize: 32, fontFace: 'Inter', color: '00A6A6', bold: true };
-
-            // Slide 1: Resumo Executivo
-            let slide1 = pptx.addSlide();
-            slide1.background = { color: '111827' };
-            slide1.addText('1. Resumo Executivo', titleOpts);
-            slide1.addText('Visão Geral da Saúde da Rede – [Mês/Ano]', { x: 0.5, y: 1.0, w: 9, h: 0.5, fontSize: 18, color: 'D1D5DB' });
-            slide1.addText([
-                { text: 'Performance Geral:', options: { bold: true } },
-                { text: ' A rede operou com alta estabilidade.', options: { breakLine: true } },
-                { text: 'Destaques Positivos:', options: { bold: true, breakLine: true } },
-                { text: ' Redução de 20% na latência média.', options: { breakLine: true } },
-                { text: 'Pontos de Atenção:', options: { bold: true, breakLine: true } },
-                { text: ' 3 incidentes de lentidão no período da tarde.', options: { breakLine: true } },
-                { text: 'Conclusão:', options: { bold: true, breakLine: true } },
-                { text: ' A saúde da rede é considerada Boa.' }
-            ], { x: 0.5, y: 1.8, w: 9, h: 3, fontSize: 16, color: 'FFFFFF', bullet: 'bull' });
-
-            // Slide 3: Incidentes (com gráfico)
-            let slide3 = pptx.addSlide();
-            slide3.background = { color: '111827' };
-            slide3.addText('3. Incidentes e Ocorrências', titleOpts);
-            slide3.addText('Total de Incidentes: 5\nTempo Médio para Resolução: 45 minutos', { x: 0.5, y: 1.2, w: 4, h: 1, fontSize: 18, color: 'FFFFFF' });
+            const script = document.createElement('script');
+            // Alterado para um CDN alternativo (jsDelivr)
+            script.src = 'https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js';
             
-            let chartData = [
-                { name: "Criticidade", labels: ["Alta", "Média", "Baixa"], values: [1, 2, 2] },
-            ];
-            let chartOpts = { x: 5, y: 1.2, w: 4.5, h: 3.5, 
-                chartColors: ['EF4444', 'F59E0B', '6B7280'],
-                dataLabelColor: 'FFFFFF',
-                legendPos: 'r',
-                title: 'Classificação por Criticidade',
-                titleColor: 'D1D5DB',
-                titleFontSize: 16
+            script.onload = () => {
+                console.log('Biblioteca PptxGenJS carregada com sucesso.');
+                pptxLibraryLoaded = true;
+                downloadBtn.textContent = 'A gerar...';
+                generatePptx();
             };
-            slide3.addChart(pptx.charts.PIE, chartData, chartOpts);
 
-            // Slide 6: Histórico (com tabela)
-            let slide6 = pptx.addSlide();
-            slide6.background = { color: '111827' };
-            slide6.addText('6. Comparativo Histórico', titleOpts);
-            let rows = [
-                [{ text: "Mês", options: { bold: true, color: 'FFFFFF', fill: '374151' } }, { text: "Disponibilidade (%)", options: { bold: true, color: 'FFFFFF', fill: '374151' } }, { text: "Latência Média (ms)", options: { bold: true, color: 'FFFFFF', fill: '374151' } }, { text: "Incidentes Críticos", options: { bold: true, color: 'FFFFFF', fill: '374151' } }],
-                ['[Mês-6]', '99,7%', '25', '3'],
-                ['[Mês-5]', '99,6%', '22', '2'],
-                ['[Mês-4]', '99,9%', '18', '1'],
-                ['[Mês-3]', '99,8%', '19', '1'],
-                ['[Mês-2]', '99,9%', '16', '0'],
-                [{ text: '[Mês-1]', options: { bold: true } }, { text: '99,8%', options: { bold: true } }, { text: '15', options: { bold: true } }, { text: '1', options: { bold: true } }]
-            ];
-            slide6.addTable(rows, { x: 0.5, y: 1.2, w: 9, autoPage: true, color: 'FFFFFF', border: { type: 'solid', pt: 1, color: '6B7280' }, rowH: 0.4 });
+            script.onerror = () => {
+                console.error('Falha ao carregar a biblioteca PptxGenJS.');
+                downloadBtn.textContent = 'Falha no Carregamento';
+                setTimeout(() => { 
+                    downloadBtn.disabled = false;
+                    downloadBtn.textContent = 'Tentar Novamente';
+                }, 3000);
+            };
 
+            document.head.appendChild(script);
+        }
 
-            // Adicionar os outros slides de forma simplificada
-            const otherSlides = [2, 4, 5, 7, 8];
-            otherSlides.forEach(slideNum => {
-                const slideContent = document.querySelector(`.slide:nth-child(${slideNum})`);
-                if(slideContent){
-                    let slide = pptx.addSlide();
-                    slide.background = { color: '111827' };
-                    const titleText = slideContent.querySelector('h1').innerText;
-                    slide.addText(titleText, titleOpts);
-                    slide.addText("O conteúdo detalhado para este slide\nestá disponível na versão HTML interativa.", { x: 1, y: 2, w:8, h:2, fontSize: 18, color: 'D1D5DB', align: 'center' });
-                }
-            });
+        downloadBtn.addEventListener('click', loadPptxLibraryAndGenerate);
 
-            pptx.writeFile({ fileName: 'Apresentacao_Saude_Rede.pptx' });
-        });
-
-        // Initial setup
         showSlide(currentSlide);
-    });
     </script>
 
 </body>
