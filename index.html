@@ -3,424 +3,446 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Book Gerencial – Saúde da Rede de Internet</title>
+    <title>Calculadora de Consumo de Combustível</title>
+    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Configuração da Fonte Inter -->
     <style>
         body {
             font-family: 'Inter', sans-serif;
-        }
-        .slide {
-            transition: opacity 0.5s ease-in-out;
-        }
-        .slide-hidden {
-            display: none;
-        }
-        /* Simple chart styles */
-        .pie-chart {
-            width: 150px;
-            height: 150px;
-            border-radius: 50%;
-            background-image: conic-gradient(
-                #ef4444 0% 20%,   /* Alta (vermelho) */
-                #f59e0b 20% 60%,  /* Média (amarelo) */
-                #6b7280 60% 100% /* Baixa (cinza) */
-            );
-        }
-        .gauge-chart {
-            width: 150px;
-            height: 75px;
-            border-top-left-radius: 150px;
-            border-top-right-radius: 150px;
-            background: conic-gradient(from -90deg at 50% 100%, #10B981 0%, #10B981 99.8%, #E5E7EB 99.8%, #E5E7EB 100%);
+            background-color: #f3f4f6;
         }
     </style>
-</head>
-<body class="bg-gray-900 text-white flex flex-col items-center justify-center min-h-screen p-4">
+    <!-- Firebase SDKs -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, addDoc, onSnapshot, collection, query, orderBy, limit, updateDoc, getDocs, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-    <div class="w-full max-w-4xl bg-gray-800 rounded-lg shadow-2xl overflow-hidden">
-        <!-- Presentation Slides Container -->
-        <div id="presentation-container" class="relative p-8 md:p-12 min-h-[500px]">
-            
-            <!-- Slide 1: Resumo Executivo -->
-            <div class="slide" data-title="Resumo Executivo">
-                <h1 class="text-3xl font-bold text-cyan-400 mb-2">1. Resumo Executivo</h1>
-                <h2 class="text-xl font-semibold text-gray-300 mb-6">Visão Geral da Saúde da Rede – [Mês/Ano]</h2>
-                <ul class="space-y-4 text-lg">
-                    <li class="flex items-start"><span class="text-cyan-400 mr-3 mt-1">▶</span><div><strong class="font-semibold">Performance Geral:</strong> A rede operou com alta estabilidade durante o período, mantendo os principais indicadores dentro dos limites esperados.</div></li>
-                    <li class="flex items-start"><span class="text-cyan-400 mr-3 mt-1">▶</span><div><strong class="font-semibold">Destaques Positivos:</strong> Implementação do novo link de fibra resultou em uma redução de 20% na latência média.</div></li>
-                    <li class="flex items-start"><span class="text-cyan-400 mr-3 mt-1">▶</span><div><strong class="font-semibold">Pontos de Atenção:</strong> Registramos 3 incidentes de lentidão no período da tarde, associados ao pico de uso.</div></li>
-                    <li class="flex items-start"><span class="text-cyan-400 mr-3 mt-1">▶</span><div><strong class="font-semibold">Conclusão:</strong> A saúde da rede é considerada <span class="bg-green-500/20 text-green-300 px-2 py-1 rounded">Boa</span>. Ações preventivas estão em andamento.</div></li>
-                </ul>
-            </div>
+        // Variáveis globais (fornecidas pelo ambiente Canvas/Immersive)
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : undefined;
 
-            <!-- Slide 2: Indicadores de Desempenho -->
-            <div class="slide slide-hidden" data-title="Indicadores de Desempenho (KPIs)">
-                <h1 class="text-3xl font-bold text-cyan-400 mb-6">2. Indicadores de Desempenho (KPIs)</h1>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    <div class="bg-gray-700/50 p-4 rounded-lg text-center">
-                        <h3 class="font-semibold mb-2">Disponibilidade da Rede (% Uptime)</h3>
-                        <div class="relative mx-auto gauge-chart"></div>
-                        <p class="text-4xl font-bold mt-2">99,8%</p>
-                        <p class="text-green-400">Meta: &gt; 99.5%</p>
-                    </div>
-                    <div class="bg-gray-700/50 p-4 rounded-lg text-center">
-                        <h3 class="font-semibold mb-2">Latência Média (ms)</h3>
-                        <p class="text-4xl font-bold mt-10">15 ms</p>
-                        <p class="text-green-400">Meta: &lt; 20 ms</p>
-                    </div>
-                    <div class="bg-gray-700/50 p-4 rounded-lg">
-                        <h3 class="font-semibold mb-2 text-center">Velocidade (Download/Upload)</h3>
-                        <div class="flex justify-around items-end h-32 mt-4">
-                            <div class="text-center">
-                                <div class="w-12 bg-cyan-500 rounded-t-sm" style="height: 96%;"></div>
-                                <p class="text-sm mt-1">480 Mbps</p>
-                            </div>
-                            <div class="text-center">
-                                <div class="w-12 bg-gray-500 rounded-t-sm" style="height: 100%;"></div>
-                                <p class="text-sm mt-1">500 Mbps</p>
-                            </div>
-                            <div class="text-center">
-                                <div class="w-12 bg-purple-500 rounded-t-sm" style="height: 98%;"></div>
-                                <p class="text-sm mt-1">245 Mbps</p>
-                            </div>
-                             <div class="text-center">
-                                <div class="w-12 bg-gray-500 rounded-t-sm" style="height: 100%;"></div>
-                                <p class="text-sm mt-1">250 Mbps</p>
-                            </div>
-                        </div>
-                        <div class="flex justify-around text-xs mt-2">
-                           <span>Down</span> <span class="text-gray-400">Cont.</span>
-                           <span>Up</span> <span class="text-gray-400">Cont.</span>
-                        </div>
-                    </div>
-                    <div class="bg-gray-700/50 p-4 rounded-lg text-center">
-                        <h3 class="font-semibold mb-2">Taxa de Perda de Pacotes</h3>
-                        <p class="text-4xl font-bold mt-10">0.02%</p>
-                        <p class="text-green-400">Meta: &lt; 0.1%</p>
-                    </div>
-                </div>
-            </div>
+        let db;
+        let auth;
+        let userId;
 
-            <!-- Slide 3: Incidentes e Ocorrências -->
-            <div class="slide slide-hidden" data-title="Incidentes e Ocorrências">
-                <h1 class="text-3xl font-bold text-cyan-400 mb-6">3. Incidentes e Ocorrências</h1>
-                <div class="flex flex-col md:flex-row gap-8">
-                    <div class="flex-1 space-y-4">
-                        <div class="bg-gray-700/50 p-4 rounded-lg">
-                            <p class="text-gray-400">Total de Incidentes</p>
-                            <p class="text-3xl font-bold">5</p>
-                        </div>
-                        <div class="bg-gray-700/50 p-4 rounded-lg">
-                            <p class="text-gray-400">Tempo Médio para Resolução (MTTR)</p>
-                            <p class="text-3xl font-bold">45 minutos</p>
-                        </div>
-                    </div>
-                    <div class="flex-1 bg-gray-700/50 p-4 rounded-lg">
-                        <h3 class="font-semibold text-center mb-4">Classificação por Criticidade</h3>
-                        <div class="flex items-center justify-center gap-6">
-                            <div class="pie-chart"></div>
-                            <ul class="space-y-2">
-                                <li><span class="inline-block w-3 h-3 bg-red-500 rounded-full mr-2"></span>Alta: 1</li>
-                                <li><span class="inline-block w-3 h-3 bg-yellow-500 rounded-full mr-2"></span>Média: 2</li>
-                                <li><span class="inline-block w-3 h-3 bg-gray-500 rounded-full mr-2"></span>Baixa: 2</li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Slide 4: Monitoramento em Tempo Real -->
-            <div class="slide slide-hidden" data-title="Monitoramento em Tempo Real">
-                <h1 class="text-3xl font-bold text-cyan-400 mb-6">4. Monitoramento em Tempo Real</h1>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                        <h3 class="font-semibold mb-2">Gráfico de Tráfego por Horário</h3>
-                        <div class="bg-gray-700/50 p-4 rounded-lg">
-                           <img src="https://placehold.co/600x250/1F2937/FFFFFF?text=Gráfico+de+Tráfego" alt="Gráfico de Tráfego" class="rounded-md w-full" id="traffic-chart-img">
-                           <p class="text-center mt-2 text-sm text-gray-400">Pico de consumo identificado: 15:00h - 17:00h</p>
-                        </div>
-                    </div>
-                    <div>
-                        <h3 class="font-semibold mb-2">Alertas Recentes</h3>
-                        <div class="bg-gray-700/50 p-4 rounded-lg space-y-3">
-                            <div class="flex items-center"><span class="w-3 h-3 rounded-full bg-yellow-500 mr-3 flex-shrink-0"></span>[ALERTA MÉDIO] 14:30 - CPU do Firewall atingiu 75%.</div>
-                            <div class="flex items-center"><span class="w-3 h-3 rounded-full bg-red-500 mr-3 flex-shrink-0"></span>[ALERTA ALTO] 10:15 - Múltiplas tentativas de login falhas.</div>
-                            <div class="flex items-center"><span class="w-3 h-3 rounded-full bg-green-500 mr-3 flex-shrink-0"></span>[OK] 09:00 - Sistema operando normalmente.</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-             <!-- Slide 5: Segurança da Rede -->
-            <div class="slide slide-hidden" data-title="Segurança da Rede">
-                <h1 class="text-3xl font-bold text-cyan-400 mb-6">5. Segurança da Rede</h1>
-                <h3 class="font-semibold mb-2">Tentativas de Acesso Não Autorizado Bloqueadas: <span class="text-xl text-red-400">1.250</span></h3>
-                <div class="my-4 p-4 bg-gray-700/50 rounded-lg">
-                     <img src="https://placehold.co/800x200/1F2937/FFFFFF?text=Mapa+de+Ameaças" alt="Mapa de Ameaças" class="rounded-md w-full" id="threat-map-img">
-                </div>
-                <h3 class="font-semibold mb-2 mt-6">Status das Ferramentas de Segurança:</h3>
-                <ul class="space-y-2 text-lg">
-                    <li class="flex items-center"><span class="text-green-400 mr-2">✔</span>Firewall: Firmware atualizado.</li>
-                    <li class="flex items-center"><span class="text-green-400 mr-2">✔</span>Antivírus (Endpoints): 100% dos dispositivos atualizados.</li>
-                    <li class="flex items-center"><span class="text-green-400 mr-2">✔</span>VPNs e Conexões Seguras: Todas as conexões ativas e criptografadas.</li>
-                </ul>
-            </div>
-
-            <!-- Slide 6: Comparativo Histórico -->
-            <div class="slide slide-hidden" data-title="Comparativo Histórico">
-                <h1 class="text-3xl font-bold text-cyan-400 mb-6">6. Comparativo Histórico</h1>
-                <p class="mb-4 text-gray-300">Evolução da performance nos últimos 6 meses.</p>
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left border-collapse">
-                        <thead>
-                            <tr class="bg-gray-700/50">
-                                <th class="p-3">Mês</th>
-                                <th class="p-3 text-center">Disponibilidade (%)</th>
-                                <th class="p-3 text-center">Latência Média (ms)</th>
-                                <th class="p-3 text-center">Incidentes Críticos</th>
-                            </tr>
-                        </thead>
-                        <tbody class="bg-gray-800">
-                            <tr class="border-b border-gray-700">
-                                <td class="p-3">[Mês-6]</td>
-                                <td class="p-3 text-center">99,7%</td>
-                                <td class="p-3 text-center">25</td>
-                                <td class="p-3 text-center">3</td>
-                            </tr>
-                            <tr class="border-b border-gray-700">
-                                <td class="p-3">[Mês-5]</td>
-                                <td class="p-3 text-center">99,6%</td>
-                                <td class="p-3 text-center">22</td>
-                                <td class="p-3 text-center">2</td>
-                            </tr>
-                             <tr class="border-b border-gray-700">
-                                <td class="p-3">[Mês-4]</td>
-                                <td class="p-3 text-center">99,9%</td>
-                                <td class="p-3 text-center">18</td>
-                                <td class="p-3 text-center">1</td>
-                            </tr>
-                             <tr class="border-b border-gray-700">
-                                <td class="p-3">[Mês-3]</td>
-                                <td class="p-3 text-center">99,8%</td>
-                                <td class="p-3 text-center">19</td>
-                                <td class="p-3 text-center">1</td>
-                            </tr>
-                             <tr class="border-b border-gray-700">
-                                <td class="p-3">[Mês-2]</td>
-                                <td class="p-3 text-center">99,9%</td>
-                                <td class="p-3 text-center">16</td>
-                                <td class="p-3 text-center">0</td>
-                            </tr>
-                             <tr class="bg-cyan-900/30">
-                                <td class="p-3 font-bold">[Mês-1]</td>
-                                <td class="p-3 text-center font-bold">99,8%</td>
-                                <td class="p-3 text-center font-bold">15</td>
-                                <td class="p-3 text-center font-bold">1</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-                 <p class="mt-4 text-center font-semibold text-green-300">Tendência Geral: Melhoria Contínua</p>
-            </div>
-
-            <!-- Slide 7: Ações Corretivas e Preventivas -->
-            <div class="slide slide-hidden" data-title="Ações Corretivas e Preventivas">
-                <h1 class="text-3xl font-bold text-cyan-400 mb-6">7. Ações Corretivas e Preventivas</h1>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                        <h3 class="font-semibold text-lg mb-2">Ações Realizadas</h3>
-                        <ul class="space-y-3">
-                            <li class="bg-gray-700/50 p-3 rounded-lg"><span class="font-bold text-green-400">[CONCLUÍDO]</span> Upgrade do Switch Central.</li>
-                            <li class="bg-gray-700/50 p-3 rounded-lg"><span class="font-bold text-green-400">[CONCLUÍDO]</span> Balanceamento de Carga.</li>
-                            <li class="bg-gray-700/50 p-3 rounded-lg"><span class="font-bold text-green-400">[CONCLUÍDO]</span> Atualização do Firmware do Firewall.</li>
-                        </ul>
-                    </div>
-                     <div>
-                        <h3 class="font-semibold text-lg mb-2">Plano de Ação Futuro</h3>
-                        <ul class="space-y-3">
-                            <li class="bg-gray-700/50 p-3 rounded-lg"><span class="font-bold text-yellow-400">[EM ANDAMENTO]</span> Segmentação da Rede Wi-Fi.</li>
-                            <li class="bg-gray-700/50 p-3 rounded-lg"><span class="font-bold text-blue-400">[PLANEJADO]</span> Contratação de Link de Redundância (Q4).</li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Slide 8: Recomendações Técnicas -->
-            <div class="slide slide-hidden" data-title="Recomendações Técnicas">
-                <h1 class="text-3xl font-bold text-cyan-400 mb-6">8. Recomendações Técnicas</h1>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                        <h3 class="font-semibold text-lg mb-2">Sugestões para Melhoria</h3>
-                        <ul class="space-y-3">
-                            <li class="bg-gray-700/50 p-3 rounded-lg"><strong>Implementar QoS (Quality of Service):</strong> Priorizar tráfego crítico.</li>
-                            <li class="bg-gray-700/50 p-3 rounded-lg"><strong>Monitoramento de Aplicações:</strong> Identificar consumo de banda por app.</li>
-                        </ul>
-                    </div>
-                     <div>
-                        <h3 class="font-semibold text-lg mb-2">Investimentos Necessários</h3>
-                        <ul class="space-y-3">
-                            <li class="bg-gray-700/50 p-3 rounded-lg"><strong>Aquisição de Access Points Wi-Fi 6:</strong> Melhorar cobertura e velocidade.</li>
-                            <li class="bg-gray-700/50 p-3 rounded-lg"><strong>Licença de Software de Análise de Tráfego.</strong></li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
-
-        </div>
-
-        <!-- Navigation -->
-        <div class="bg-gray-900 p-4 flex justify-between items-center border-t border-gray-700">
-            <button id="prevBtn" class="bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-2 px-4 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed">
-                Anterior
-            </button>
-            <button id="downloadBtn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg">
-                Download PPTX
-            </button>
-            <div id="slide-counter" class="text-sm text-gray-400"></div>
-            <button id="nextBtn" class="bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-2 px-4 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed">
-                Próximo
-            </button>
-        </div>
-    </div>
-
-    <!-- O script da biblioteca será carregado dinamicamente -->
-    <script>
-        // Lógica de navegação (sem alterações)
-        const slides = document.querySelectorAll('.slide');
-        const prevBtn = document.getElementById('prevBtn');
-        const nextBtn = document.getElementById('nextBtn');
-        const slideCounter = document.getElementById('slide-counter');
-        const downloadBtn = document.getElementById('downloadBtn');
-        
-        let currentSlide = 0;
-        const totalSlides = slides.length;
-
-        function showSlide(index) {
-            slides.forEach((slide, i) => {
-                slide.style.display = (i === index) ? 'block' : 'none';
-            });
-            slideCounter.textContent = `Slide ${index + 1} de ${totalSlides}`;
-            prevBtn.disabled = index === 0;
-            nextBtn.disabled = index === totalSlides - 1;
+        // Função utilitária para conversão de Base64 para ArrayBuffer (necessária para Firebase)
+        function base64ToArrayBuffer(base64) {
+            const binary_string = window.atob(base64);
+            const len = binary_string.length;
+            const bytes = new Uint8Array(len);
+            for (let i = 0; i < len; i++) {
+                bytes[i] = binary_string.charCodeAt(i);
+            }
+            return bytes.buffer;
         }
 
-        prevBtn.addEventListener('click', () => { if (currentSlide > 0) { currentSlide--; showSlide(currentSlide); } });
-        nextBtn.addEventListener('click', () => { if (currentSlide < totalSlides - 1) { currentSlide++; showSlide(currentSlide); } });
-        
-        // --- LÓGICA DE DOWNLOAD ROBUSTA ---
-        let pptxLibraryLoaded = false;
-
-        function generatePptx() {
+        // Funções de Inicialização e Autenticação
+        window.initFirebase = async () => {
             try {
-                let pptx = new PptxGenJS();
-                pptx.layout = 'LAYOUT_WIDE';
-                const titleOpts = { x: 0.5, y: 0.25, w: 9, h: 0.75, fontSize: 32, fontFace: 'Inter', color: '00A6A6', bold: true };
+                const app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                auth = getAuth(app);
 
-                // Slide 1
-                let slide1 = pptx.addSlide();
-                slide1.background = { color: '111827' };
-                slide1.addText('1. Resumo Executivo', titleOpts);
-                slide1.addText('Visão Geral da Saúde da Rede – [Mês/Ano]', { x: 0.5, y: 1.0, w: 9, h: 0.5, fontSize: 18, color: 'D1D5DB' });
-                slide1.addText([
-                    { text: 'Performance Geral:', options: { bold: true } },
-                    { text: ' A rede operou com alta estabilidade.', options: { breakLine: true } },
-                    { text: 'Destaques Positivos:', options: { bold: true, breakLine: true } },
-                    { text: ' Redução de 20% na latência média.', options: { breakLine: true } },
-                    { text: 'Pontos de Atenção:', options: { bold: true, breakLine: true } },
-                    { text: ' 3 incidentes de lentidão no período da tarde.', options: { breakLine: true } },
-                    { text: 'Conclusão:', options: { bold: true, breakLine: true } },
-                    { text: ' A saúde da rede é considerada Boa.' }
-                ], { x: 0.5, y: 1.8, w: 9, h: 3, fontSize: 16, color: 'FFFFFF', bullet: 'bull' });
+                // Ativar logs de debug (opcional, mas útil para desenvolvimento)
+                setLogLevel('error'); // Mantenha 'error' ou 'silent' para produção.
 
-                // Slide 3
-                let slide3 = pptx.addSlide();
-                slide3.background = { color: '111827' };
-                slide3.addText('3. Incidentes e Ocorrências', titleOpts);
-                slide3.addText('Total de Incidentes: 5\nTempo Médio para Resolução: 45 minutos', { x: 0.5, y: 1.2, w: 4, h: 1, fontSize: 18, color: 'FFFFFF' });
-                let chartData = [{ name: "Criticidade", labels: ["Alta", "Média", "Baixa"], values: [1, 2, 2] }];
-                let chartOpts = { x: 5, y: 1.2, w: 4.5, h: 3.5, chartColors: ['EF4444', 'F59E0B', '6B7280'], dataLabelColor: 'FFFFFF', legendPos: 'r', title: 'Classificação por Criticidade', titleColor: 'D1D5DB', titleFontSize: 16 };
-                slide3.addChart(pptx.charts.PIE, chartData, chartOpts);
+                if (initialAuthToken) {
+                    await signInWithCustomToken(auth, initialAuthToken);
+                } else {
+                    await signInAnonymously(auth);
+                }
 
-                // Slide 6
-                let slide6 = pptx.addSlide();
-                slide6.background = { color: '111827' };
-                slide6.addText('6. Comparativo Histórico', titleOpts);
-                let rows = [
-                    [{ text: "Mês", options: { bold: true, color: 'FFFFFF', fill: '374151' } }, { text: "Disponibilidade (%)", options: { bold: true, color: 'FFFFFF', fill: '374151' } }, { text: "Latência Média (ms)", options: { bold: true, color: 'FFFFFF', fill: '374151' } }, { text: "Incidentes Críticos", options: { bold: true, color: 'FFFFFF', fill: '374151' } }],
-                    ['[Mês-6]', '99,7%', '25', '3'],
-                    ['[Mês-5]', '99,6%', '22', '2'],
-                    ['[Mês-4]', '99,9%', '18', '1'],
-                    ['[Mês-3]', '99,8%', '19', '1'],
-                    ['[Mês-2]', '99,9%', '16', '0'],
-                    [{ text: '[Mês-1]', options: { bold: true } }, { text: '99,8%', options: { bold: true } }, { text: '15', options: { bold: true } }, { text: '1', options: { bold: true } }]
-                ];
-                slide6.addTable(rows, { x: 0.5, y: 1.2, w: 9, autoPage: true, color: 'FFFFFF', border: { type: 'solid', pt: 1, color: '6B7280' }, rowH: 0.4 });
-
-                // Outros slides
-                const otherSlides = [2, 4, 5, 7, 8];
-                otherSlides.forEach(slideNum => {
-                    const slideContent = document.querySelector(`.slide:nth-child(${slideNum})`);
-                    if(slideContent){
-                        let slide = pptx.addSlide();
-                        slide.background = { color: '111827' };
-                        const titleText = slideContent.querySelector('h1').innerText;
-                        slide.addText(titleText, titleOpts);
-                        slide.addText("O conteúdo detalhado para este slide\nestá disponível na versão HTML interativa.", { x: 1, y: 2, w:8, h:2, fontSize: 18, color: 'D1D5DB', align: 'center' });
+                onAuthStateChanged(auth, (user) => {
+                    if (user) {
+                        userId = user.uid;
+                        console.log("Usuário autenticado:", userId);
+                        document.getElementById('user-id-display').textContent = `ID do Usuário: ${userId}`;
+                        // Inicia o listener de dados após a autenticação
+                        window.setupFirestoreListener();
+                    } else {
+                        console.log("Nenhum usuário logado. O ID de usuário anônimo será usado.");
+                        userId = crypto.randomUUID(); // Fallback para ID temporário
+                        document.getElementById('user-id-display').textContent = `ID Temporário: ${userId}`;
+                        // Não inicia o listener aqui, pois o token de auth pode ter expirado.
+                        // O onAuthStateChanged deve garantir que a reautenticação ocorra.
                     }
                 });
 
-                pptx.writeFile({ fileName: 'Apresentacao_Saude_Rede.pptx' });
-                downloadBtn.disabled = false;
-                downloadBtn.textContent = 'Download PPTX';
-
-            } catch (err) {
-                console.error("Ocorreu um erro ao gerar o PPTX:", err);
-                downloadBtn.textContent = 'Erro!';
-                setTimeout(() => { 
-                    downloadBtn.disabled = false;
-                    downloadBtn.textContent = 'Download PPTX';
-                }, 3000);
+            } catch (error) {
+                console.error("Erro ao inicializar Firebase ou autenticar:", error);
+                document.getElementById('status-message').textContent = "Erro de inicialização. Verifique o console.";
             }
-        }
-        
-        function loadPptxLibraryAndGenerate() {
-            downloadBtn.disabled = true;
-            downloadBtn.textContent = 'A preparar...';
+        };
 
-            if (pptxLibraryLoaded) {
-                generatePptx();
+        // Função para obter o caminho da coleção de registros (privado do usuário)
+        const getCollectionPath = () => {
+            if (!userId) {
+                console.error("UserID não definido. Não é possível acessar o Firestore.");
+                return null;
+            }
+            // Caminho: /artifacts/{appId}/users/{userId}/fuel_logs
+            return `artifacts/${appId}/users/${userId}/fuel_logs`;
+        };
+
+        // Função para calcular o consumo (km/L ou km/m³)
+        const calculateConsumption = (currentOdometer, previousOdometer, fuelQuantity) => {
+            if (!previousOdometer || !fuelQuantity || fuelQuantity === 0) return null;
+            const distance = currentOdometer - previousOdometer;
+            if (distance <= 0) return null;
+            // Retorna km por unidade (L ou m³)
+            return (distance / fuelQuantity).toFixed(2);
+        };
+
+        // Adicionar Log de Abastecimento
+        window.addFuelLog = async (event) => {
+            event.preventDefault();
+            const path = getCollectionPath();
+            if (!path) return;
+
+            const form = event.target;
+            const odometer = parseFloat(form.odometer.value);
+            const fuelType = form.fuel_type.value;
+            const quantity = parseFloat(form.quantity.value);
+            const price = parseFloat(form.price.value);
+            const date = form.date.value || new Date().toISOString().split('T')[0];
+
+            if (isNaN(odometer) || isNaN(quantity) || isNaN(price) || odometer <= 0 || quantity <= 0 || price <= 0) {
+                showModal('Atenção', 'Por favor, preencha todos os campos com valores válidos e positivos.');
                 return;
             }
 
-            const script = document.createElement('script');
-            // Alterado para um CDN alternativo (jsDelivr)
-            script.src = 'https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js';
-            
-            script.onload = () => {
-                console.log('Biblioteca PptxGenJS carregada com sucesso.');
-                pptxLibraryLoaded = true;
-                downloadBtn.textContent = 'A gerar...';
-                generatePptx();
-            };
+            try {
+                const newLog = {
+                    odometer,
+                    fuel_type: fuelType,
+                    quantity,
+                    price_per_unit: price,
+                    date: new Date(date).toISOString(),
+                    timestamp: Date.now(),
+                    consumption: null, // O consumo será calculado no registro ANTERIOR
+                    km_per_unit: null // O consumo será calculado no registro ANTERIOR
+                };
 
-            script.onerror = () => {
-                console.error('Falha ao carregar a biblioteca PptxGenJS.');
-                downloadBtn.textContent = 'Falha no Carregamento';
-                setTimeout(() => { 
-                    downloadBtn.disabled = false;
-                    downloadBtn.textContent = 'Tentar Novamente';
-                }, 3000);
-            };
+                // 1. Buscar o registro anterior (apenas o último, ordenado pelo odômetro)
+                const qPrevious = query(collection(db, path), orderBy("odometer", "desc"), limit(1));
+                const previousDocs = await getDocs(qPrevious);
+                const previousLog = previousDocs.docs.length > 0 ? { id: previousDocs.docs[0].id, ...previousDocs.docs[0].data() } : null;
 
-            document.head.appendChild(script);
+                // 2. Adicionar o novo registro
+                const docRef = await addDoc(collection(db, path), newLog);
+
+                // 3. Se houver registro anterior, calcular o consumo e atualizar o registro ANTERIOR
+                if (previousLog) {
+                    const consumption = calculateConsumption(newLog.odometer, previousLog.odometer, previousLog.quantity);
+
+                    if (consumption) {
+                        const unit = previousLog.fuel_type === 'Gasolina' ? 'km/L' : 'km/m³';
+
+                        const updateData = {
+                            consumption: `${consumption} ${unit}`,
+                            km_per_unit: parseFloat(consumption),
+                            distance_traveled: newLog.odometer - previousLog.odometer,
+                            calculated_at_timestamp: Date.now()
+                        };
+
+                        // Atualiza o documento anterior
+                        const prevDocRef = doc(db, path, previousLog.id);
+                        await updateDoc(prevDocRef, updateData);
+                        console.log(`Consumo (${updateData.consumption}) calculado e salvo no registro anterior: ${previousLog.id}`);
+                    }
+                }
+
+                showModal('Sucesso', `Registro de abastecimento (${fuelType} em ${odometer} km) adicionado com sucesso!`);
+                form.reset();
+
+            } catch (e) {
+                console.error("Erro ao adicionar documento: ", e);
+                showModal('Erro', 'Ocorreu um erro ao salvar o registro. Tente novamente.');
+            }
+        };
+
+        // Função de Listener em Tempo Real (onSnapshot)
+        window.setupFirestoreListener = () => {
+            const path = getCollectionPath();
+            if (!path) return;
+
+            const logsCollectionRef = collection(db, path);
+            // Ordena pelo odômetro (a ordem correta de abastecimento)
+            const q = query(logsCollectionRef, orderBy("odometer", "desc"));
+
+            onSnapshot(q, (snapshot) => {
+                const logs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                window.renderLogs(logs);
+                window.calculateAndDisplayAverages(logs);
+            }, (error) => {
+                console.error("Erro ao ouvir logs:", error);
+                document.getElementById('status-message').textContent = "Erro ao carregar dados em tempo real.";
+            });
+        };
+
+        // Funções de Renderização e Média
+        window.renderLogs = (logs) => {
+            const container = document.getElementById('fuel-logs-container');
+            container.innerHTML = '';
+
+            if (logs.length === 0) {
+                container.innerHTML = '<p class="text-gray-500 italic p-4">Nenhum registro de abastecimento encontrado. Adicione o primeiro!</p>';
+                return;
+            }
+
+            // Cabeçalho da tabela
+            const headerHtml = `
+                <div class="grid grid-cols-6 gap-2 bg-gray-200 text-gray-700 font-semibold p-3 rounded-t-lg text-sm md:text-base">
+                    <div class="col-span-1">Data</div>
+                    <div class="col-span-1">Odômetro (km)</div>
+                    <div class="col-span-1">Combustível</div>
+                    <div class="col-span-1">Qtd (L/m³)</div>
+                    <div class="col-span-1 text-center">Consumo</div>
+                    <div class="col-span-1 text-center">Ações</div>
+                </div>
+            `;
+            container.innerHTML += headerHtml;
+
+            logs.forEach(log => {
+                const dateOnly = log.date ? new Date(log.date).toLocaleDateString('pt-BR') : 'N/A';
+                const consumptionDisplay = log.consumption || (log.id === logs[logs.length - 1].id ? 'Primeiro Reg. / Pendente' : 'Pendente');
+
+                const rowHtml = `
+                    <div class="grid grid-cols-6 gap-2 border-b border-gray-200 hover:bg-gray-50 p-3 text-sm md:text-base items-center">
+                        <div class="col-span-1 text-gray-600">${dateOnly}</div>
+                        <div class="col-span-1 font-medium text-blue-700">${log.odometer.toLocaleString('pt-BR')}</div>
+                        <div class="col-span-1">${log.fuel_type}</div>
+                        <div class="col-span-1">${log.quantity.toFixed(2).replace('.', ',')}</div>
+                        <div class="col-span-1 text-center font-bold ${log.consumption ? 'text-green-600' : 'text-yellow-600'}">
+                            ${consumptionDisplay}
+                        </div>
+                        <div class="col-span-1 flex justify-center">
+                            <button onclick="window.deleteLog('${log.id}')" class="text-red-500 hover:text-red-700 p-1 rounded transition duration-150" title="Excluir Registro">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm4 0a1 1 0 10-2 0v6a1 1 0 102 0V8z" clip-rule="evenodd" />
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                `;
+                container.innerHTML += rowHtml;
+            });
+        };
+
+        window.calculateAndDisplayAverages = (logs) => {
+            let totalKmPerL = 0;
+            let countKmPerL = 0;
+            let totalKmPerM3 = 0;
+            let countKmPerM3 = 0;
+
+            logs.forEach(log => {
+                if (log.km_per_unit) {
+                    if (log.fuel_type === 'Gasolina') {
+                        totalKmPerL += log.km_per_unit;
+                        countKmPerL++;
+                    } else if (log.fuel_type === 'GNV') {
+                        totalKmPerM3 += log.km_per_unit;
+                        countKmPerM3++;
+                    }
+                }
+            });
+
+            const avgKmPerL = countKmPerL > 0 ? (totalKmPerL / countKmPerL).toFixed(2) : 'N/A';
+            const avgKmPerM3 = countKmPerM3 > 0 ? (totalKmPerM3 / countKmPerM3).toFixed(2) : 'N/A';
+
+            document.getElementById('avg-gasolina').textContent = `${avgKmPerL} km/L`;
+            document.getElementById('avg-gnv').textContent = `${avgKmPerM3} km/m³`;
+        };
+
+        // Função para deletar log
+        window.deleteLog = async (logId) => {
+            const path = getCollectionPath();
+            if (!path) return;
+
+            // Substitua esta chamada de função por um modal personalizado para evitar alert()
+            const confirmDelete = await showConfirmModal('Confirmação', 'Tem certeza de que deseja excluir este registro? Esta ação é irreversível.');
+
+            if (!confirmDelete) return;
+
+            try {
+                // A exclusão de um log pode invalidar o cálculo do próximo log.
+                // O onSnapshot se encarregará de recarregar a lista, mas a re-cálculo de todos os consumos
+                // seria complexo. Por simplicidade, faremos a exclusão e confiamos no usuário
+                // para adicionar o próximo log novamente se necessário.
+
+                await deleteDoc(doc(db, path, logId));
+                showModal('Sucesso', 'Registro excluído com sucesso.');
+                // O onSnapshot garantirá a atualização da UI.
+
+            } catch (e) {
+                console.error("Erro ao deletar documento: ", e);
+                showModal('Erro', 'Ocorreu um erro ao excluir o registro.');
+            }
+        };
+
+        // --- Funções de Modal (Substituição de alert/confirm) ---
+        function showModal(title, message) {
+            const modalTitle = document.getElementById('custom-modal-title');
+            const modalMessage = document.getElementById('custom-modal-message');
+            const modal = document.getElementById('custom-modal');
+
+            modalTitle.textContent = title;
+            modalMessage.textContent = message;
+            modal.classList.remove('hidden');
+
+            // Configura o botão de fechar para fechar o modal
+            document.getElementById('custom-modal-close').onclick = () => modal.classList.add('hidden');
         }
 
-        downloadBtn.addEventListener('click', loadPptxLibraryAndGenerate);
+        function showConfirmModal(title, message) {
+            return new Promise((resolve) => {
+                const modalTitle = document.getElementById('confirm-modal-title');
+                const modalMessage = document.getElementById('confirm-modal-message');
+                const modal = document.getElementById('confirm-modal');
+                const btnConfirm = document.getElementById('confirm-modal-confirm');
+                const btnCancel = document.getElementById('confirm-modal-cancel');
 
-        showSlide(currentSlide);
+                modalTitle.textContent = title;
+                modalMessage.textContent = message;
+                modal.classList.remove('hidden');
+
+                const closeModal = () => modal.classList.add('hidden');
+
+                btnConfirm.onclick = () => {
+                    closeModal();
+                    resolve(true);
+                };
+                btnCancel.onclick = () => {
+                    closeModal();
+                    resolve(false);
+                };
+            });
+        }
+
+        // Inicializa o Firebase no carregamento da página
+        window.onload = window.initFirebase;
+
     </script>
+</head>
+<body class="bg-gray-50 min-h-screen p-4 md:p-8">
+
+    <div class="max-w-6xl mx-auto">
+        <h1 class="text-3xl font-extrabold text-gray-900 mb-6 border-b pb-2">⛽ Calculadora de Consumo</h1>
+        <p id="user-id-display" class="text-sm text-gray-500 mb-4"></p>
+        <p id="status-message" class="text-sm text-red-500 mb-4"></p>
+
+        <!-- Seção de Médias de Consumo -->
+        <div class="bg-white p-6 rounded-xl shadow-lg mb-8">
+            <h2 class="text-xl font-semibold text-gray-800 mb-4">Média de Consumo Calculada</h2>
+            <div class="flex flex-col sm:flex-row gap-4">
+                <div class="flex-1 bg-blue-50 p-4 rounded-lg border-2 border-blue-200">
+                    <p class="text-sm font-medium text-blue-600">Gasolina</p>
+                    <p id="avg-gasolina" class="text-2xl font-bold text-blue-800">...</p>
+                    <p class="text-xs text-blue-500">Km por Litro (km/L)</p>
+                </div>
+                <div class="flex-1 bg-green-50 p-4 rounded-lg border-2 border-green-200">
+                    <p class="text-sm font-medium text-green-600">GNV</p>
+                    <p id="avg-gnv" class="text-2xl font-bold text-green-800">...</p>
+                    <p class="text-xs text-green-500">Km por Metro Cúbico (km/m³)</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Formulário de Abastecimento -->
+        <div class="bg-white p-6 rounded-xl shadow-lg mb-8">
+            <h2 class="text-xl font-semibold text-gray-800 mb-4">Adicionar Novo Abastecimento</h2>
+            <form id="fuel-log-form" onsubmit="window.addFuelLog(event)" class="space-y-4">
+
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <!-- Odômetro -->
+                    <div class="col-span-1">
+                        <label for="odometer" class="block text-sm font-medium text-gray-700">Odômetro (km)</label>
+                        <input type="number" step="0.1" id="odometer" name="odometer" placeholder="Ex: 125000" required
+                               class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border focus:border-indigo-500 focus:ring-indigo-500">
+                    </div>
+
+                    <!-- Tipo de Combustível -->
+                    <div class="col-span-1">
+                        <label for="fuel_type" class="block text-sm font-medium text-gray-700">Combustível</label>
+                        <select id="fuel_type" name="fuel_type" required
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border focus:border-indigo-500 focus:ring-indigo-500">
+                            <option value="Gasolina">Gasolina/Etanol</option>
+                            <option value="GNV">GNV</option>
+                        </select>
+                    </div>
+
+                    <!-- Quantidade -->
+                    <div class="col-span-1">
+                        <label for="quantity" class="block text-sm font-medium text-gray-700">Quantidade (L/m³)</label>
+                        <input type="number" step="0.01" id="quantity" name="quantity" placeholder="Ex: 45.50" required
+                               class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border focus:border-indigo-500 focus:ring-indigo-500">
+                    </div>
+
+                    <!-- Preço por Unidade -->
+                    <div class="col-span-1">
+                        <label for="price" class="block text-sm font-medium text-gray-700">Preço por Unidade (R$)</label>
+                        <input type="number" step="0.01" id="price" name="price" placeholder="Ex: 5.99" required
+                               class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border focus:border-indigo-500 focus:ring-indigo-500">
+                    </div>
+                </div>
+
+                <!-- Data do Abastecimento -->
+                <div class="col-span-4">
+                    <label for="date" class="block text-sm font-medium text-gray-700">Data do Abastecimento</label>
+                    <input type="date" id="date" name="date" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border focus:border-indigo-500 focus:ring-indigo-500">
+                </div>
+
+                <div class="pt-4">
+                    <button type="submit"
+                            class="w-full md:w-auto px-6 py-2 border border-transparent rounded-md shadow-sm text-base font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-150">
+                        Registrar Abastecimento
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Tabela de Logs de Abastecimento -->
+        <div class="bg-white p-6 rounded-xl shadow-lg">
+            <h2 class="text-xl font-semibold text-gray-800 mb-4">Histórico de Registros</h2>
+            <div id="fuel-logs-container" class="space-y-2">
+                <!-- Logs serão renderizados aqui pelo JavaScript -->
+                <p class="text-gray-500 italic p-4">Carregando registros...</p>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Custom Modal (Substituição de alert()) -->
+    <div id="custom-modal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-75 flex items-center justify-center z-50 transition-opacity duration-300">
+        <div class="bg-white rounded-lg p-6 max-w-sm w-full shadow-2xl transform scale-100">
+            <h3 id="custom-modal-title" class="text-xl font-bold text-gray-900 mb-3">Título</h3>
+            <p id="custom-modal-message" class="text-gray-700 mb-6">Mensagem</p>
+            <div class="flex justify-end">
+                <button id="custom-modal-close" class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition duration-150">
+                    OK
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom Confirm Modal (Substituição de confirm()) -->
+    <div id="confirm-modal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-75 flex items-center justify-center z-50 transition-opacity duration-300">
+        <div class="bg-white rounded-lg p-6 max-w-sm w-full shadow-2xl transform scale-100">
+            <h3 id="confirm-modal-title" class="text-xl font-bold text-gray-900 mb-3">Confirmação</h3>
+            <p id="confirm-modal-message" class="text-gray-700 mb-6">Você tem certeza?</p>
+            <div class="flex justify-end space-x-3">
+                <button id="confirm-modal-cancel" class="px-4 py-2 bg-gray-300 text-gray-800 rounded-md hover:bg-gray-400 transition duration-150">
+                    Cancelar
+                </button>
+                <button id="confirm-modal-confirm" class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition duration-150">
+                    Confirmar
+                </button>
+            </div>
+        </div>
+    </div>
 
 </body>
 </html>
-
